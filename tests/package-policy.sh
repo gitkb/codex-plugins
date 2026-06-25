@@ -30,10 +30,10 @@ if echo "$hook_commands" | grep -v '^git-kb hook codex$' >/dev/null; then
   fail "all hooks must delegate to git-kb hook codex"
 fi
 
-if grep -R "gitkb-atc\\|@personal" . \
+if grep -R "gitkb-a[t]c\\|@personal" . \
   --exclude-dir=.git \
   --exclude=package-policy.sh >/dev/null; then
-  fail "marketplace must not contain old ATC or personal-marketplace identity"
+  fail "marketplace must not contain old plugin or personal-marketplace identity"
 fi
 
 echo "Marketplace policy checks passed."
