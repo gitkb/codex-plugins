@@ -32,3 +32,19 @@ codex plugin add gitkb@gitkb
 ## License
 
 MIT
+
+## MCP Launch Regression Tests
+
+`make test` checks the packaged environment allowlist and cache version. The
+installation test exercises the actual Codex MCP launch boundary with synthetic
+sessions, custom registry settings, paths with spaces and Unicode, and credential
+canaries. It reuses an isolated plugin installation across two sessions and a
+launch without activity context. It does not start a model turn or run an activity
+sink, and it does not use your Codex home or credentials.
+
+```bash
+make test-integration CODEX_TEST_BINARY=/absolute/path/to/provider/codex
+```
+
+Pass the provider binary, rather than an ATC shim. CI runs this test with Codex
+`0.159.2`, in addition to the release checks.
