@@ -4,23 +4,17 @@ all: lint test
 
 test:
 	@tests/package-policy.sh
-	@python3 tests/mcp-contract.py plugins/gitkb
+	@python3 tests/catalog-policy.py
 
 test-integration:
-	@python3 tests/mcp-startup.py --codex "$(CODEX_TEST_BINARY)"
+	@python3 tests/verify-source.py --codex "$(CODEX_TEST_BINARY)" $(if $(CANONICAL_SOURCE_DIR),--source-checkout "$(CANONICAL_SOURCE_DIR)")
 
 lint: lint-json lint-policy
 	@echo "All checks passed."
 
 lint-json:
-	@echo "Checking marketplace.json is valid JSON..."
+	@echo "Checking marketplace catalog is valid JSON..."
 	@jq empty .agents/plugins/marketplace.json
-	@echo "Checking bundled plugin manifest is valid JSON..."
-	@jq empty plugins/gitkb/.codex-plugin/plugin.json
-	@echo "Checking bundled hooks config is valid JSON..."
-	@jq empty plugins/gitkb/hooks/hooks.json
-	@echo "Checking bundled MCP config is valid JSON..."
-	@jq empty plugins/gitkb/.mcp.json
 
 lint-policy:
 	@tests/package-policy.sh

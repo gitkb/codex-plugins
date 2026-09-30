@@ -6,34 +6,28 @@ fail() {
   exit 1
 }
 
-test -f .agents/plugins/marketplace.json || fail "missing marketplace"
-test -f plugins/gitkb/.codex-plugin/plugin.json || fail "missing bundled gitkb plugin"
+repo_root=${1:-.}
+manifest="$repo_root/.agents/plugins/marketplace.json"
+test -f "$manifest" || fail "missing marketplace"
 
-marketplace_name=$(jq -r '.name' .agents/plugins/marketplace.json)
-test "$marketplace_name" = "gitkb" || fail "marketplace name must be gitkb"
+jq -e '
+  .name == "gitkb" and
+  ([.plugins[] | select(.name == "gitkb")] | length == 1) and
+  ([.plugins[] | select(.name == "gitkb")][0] |
+    .policy == {"installation": "AVAILABLE", "authentication": "ON_INSTALL"} and
+    .category == "Productivity" and
+    (.source |
+      keys == ["path", "sha", "source", "url"] and
+      .source == "git-subdir" and
+      .url == "https://github.com/gitkb/gitkb-codex-plugin.git" and
+      .path == "./plugin" and
+      (.sha | type == "string" and test("^[0-9a-f]{40}$"))))
+' "$manifest" >/dev/null || fail "gitkb must select exactly one canonical package by immutable SHA"
 
-source_kind=$(jq -r '.plugins[] | select(.name == "gitkb") | .source.source' .agents/plugins/marketplace.json)
-source_path=$(jq -r '.plugins[] | select(.name == "gitkb") | .source.path' .agents/plugins/marketplace.json)
-test "$source_kind" = "local" || fail "Codex marketplace plugin source must be local"
-test "$source_path" = "./plugins/gitkb" || fail "gitkb source path must be ./plugins/gitkb"
+for path in plugins/gitkb plugin tests/mcp-contract.py tests/mcp-startup.py; do
+  if [ -e "$repo_root/$path" ] || [ -L "$repo_root/$path" ]; then
+    fail "catalog must not vendor the canonical payload or behavior tests: $path"
+  fi
+done
 
-plugin_name=$(jq -r '.name' plugins/gitkb/.codex-plugin/plugin.json)
-test "$plugin_name" = "gitkb" || fail "bundled plugin name must be gitkb"
-
-if jq -e 'has("hooks")' plugins/gitkb/.codex-plugin/plugin.json >/dev/null; then
-  fail "plugin manifest must not use unsupported hooks field"
-fi
-
-hook_commands=$(jq -r '.. | objects | select(.type? == "command") | .command' plugins/gitkb/hooks/hooks.json)
-test -n "$hook_commands" || fail "expected command hooks"
-if echo "$hook_commands" | grep -v '^git-kb hook codex$' >/dev/null; then
-  fail "all hooks must delegate to git-kb hook codex"
-fi
-
-if grep -R "gitkb-a[t]c\\|@personal" . \
-  --exclude-dir=.git \
-  --exclude=package-policy.sh >/dev/null; then
-  fail "marketplace must not contain old plugin or personal-marketplace identity"
-fi
-
-echo "Marketplace policy checks passed."
+echo "Catalog policy checks passed."

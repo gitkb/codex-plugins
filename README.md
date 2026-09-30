@@ -1,50 +1,85 @@
 # GitKB Codex Plugins
 
-A private Codex plugin marketplace by GitKB.
+The Codex plugin marketplace by GitKB.
 
 ## Available Plugins
 
-| Plugin | Description |
-|--------|-------------|
-| [gitkb](https://github.com/gitkb/gitkb-codex-plugin) | Knowledge base and code intelligence for AI-native development. |
+| Plugin | Authoritative source |
+|--------|----------------------|
+| gitkb | [gitkb/gitkb-codex-plugin](https://github.com/gitkb/gitkb-codex-plugin) — knowledge base and code intelligence |
 
-The Claude marketplace also includes [`meta`](https://github.com/gitkb/meta). Add the Codex `meta` plugin here after `gitkb/meta` has a `codex-plugin` payload that mirrors its Claude plugin.
+This repository owns the catalog, installation policies and approved source
+selectors. The standalone repository owns the plugin payload, hooks, skills,
+MCP configuration, package version and behavior tests. Changes to those components
+belong there; there is no bundled GitKB payload or sync workflow here.
 
-## Repository Layout
+The GitKB entry uses Codex's supported `git-subdir` source, selecting `./plugin`
+from the standalone repository by a full immutable commit SHA. See the
+[OpenAI packaging documentation](https://developers.openai.com/plugins/build/plugins).
 
-```text
-.agents/plugins/marketplace.json # Codex marketplace manifest
-plugins/gitkb/                   # Installable GitKB Codex plugin payload
-```
-
-Codex marketplace entries resolve plugin paths relative to this marketplace repo. The `plugins/gitkb` payload mirrors the private `gitkb-codex-plugin` package while both are under review.
+The Claude marketplace also includes [`meta`](https://github.com/gitkb/meta).
+Add a Codex entry here once its authoritative repository has a supported payload.
 
 ## Usage
 
 ```bash
-# Add this private marketplace when you have repository access
 codex plugin marketplace add gitkb/codex-plugins
-
-# Install a plugin
 codex plugin add gitkb@gitkb
 ```
+
+The installation identity remains `gitkb@gitkb`. Codex fetches the declared
+Git source and installs its package; a Harmony meta checkout is not required.
+The reference is pinned rather than rolling with `main`, so changes upstream
+only reach this catalog after a reviewed pin update.
+
+For an existing Git-backed marketplace installation:
+
+```bash
+codex plugin marketplace upgrade gitkb
+codex plugin add gitkb@gitkb
+```
+
+Then start a new Codex session, or resume through the ATC shim, to launch a new
+MCP process. Refreshing a marketplace or installing binaries alone does not
+change an already running MCP child's environment. Missing historical activity
+is not backfilled.
+
+## Development and Release Promotion
+
+```bash
+make release-check
+make test-integration CODEX_TEST_BINARY=/absolute/path/to/provider/codex
+```
+
+Catalog tests reject duplicate GitKB entries, unexpected sources, mutable or
+malformed selectors, escaping package paths, and a reintroduced local payload
+or copy of the MCP behavior tests.
+
+The integration command fetches the exact catalog commit into a temporary
+checkout and runs its package-owned policy, MCP contract and startup tests. The
+startup test installs this catalog's actual Git-backed entry with Codex, compares
+every installed package file against the referenced source, and verifies session
+and credential isolation. It uses an isolated Codex home and synthetic context,
+without model turns or real activity sinks. Pass the provider binary, not an ATC
+shim. Source fetches need network access to the public standalone repository;
+`make release-check` remains offline.
+
+CI checks out the same source selector and passes it as `CANONICAL_SOURCE_DIR`
+to avoid fetching that verification checkout again. Codex still resolves and
+fetches the actual Git-backed plugin entry. CI uses Codex `0.159.2`.
+
+To promote a new plugin release:
+
+1. Implement and test the change in `gitkb/gitkb-codex-plugin`, bumping its plugin
+   version when the installed payload changes.
+2. Update only the GitKB entry's `source.sha` to the approved full commit SHA.
+3. Run the catalog and delegated source checks, then review and merge the pin PR.
+
+The initial selector contains the tested `0.1.2` payload from standalone
+[PR #7](https://github.com/gitkb/gitkb-codex-plugin/pull/7), matching the payload
+previously bundled by marketplace PR #5. It is immutable and published, so the
+catalog cannot fall back to the pre-fix standalone `main` while that PR is open.
 
 ## License
 
 MIT
-
-## MCP Launch Regression Tests
-
-`make test` checks the packaged environment allowlist and cache version. The
-installation test exercises the actual Codex MCP launch boundary with synthetic
-sessions, custom registry settings, paths with spaces and Unicode, and credential
-canaries. It reuses an isolated plugin installation across two sessions and a
-launch without activity context. It does not start a model turn or run an activity
-sink, and it does not use your Codex home or credentials.
-
-```bash
-make test-integration CODEX_TEST_BINARY=/absolute/path/to/provider/codex
-```
-
-Pass the provider binary, rather than an ATC shim. CI runs this test with Codex
-`0.159.2`, in addition to the release checks.

@@ -9,16 +9,29 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
-      - name: Run release checks
+      - name: Run catalog release checks
         run: make release-check
+      - name: Read approved canonical source
+        id: source
+        run: echo "sha=$(jq -r '.plugins[] | select(.name == "gitkb") | .source.sha' .agents/plugins/marketplace.json)" >> "$GITHUB_OUTPUT"
+      - name: Checkout exact canonical plugin and tests
+        uses: actions/checkout@v4
+        with:
+          repository: gitkb/gitkb-codex-plugin
+          ref: ${{ steps.source.outputs.sha }}
+          path: .canonical
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install Codex for MCP launch regression
+      - name: Install Codex for source and MCP launch regression
         run: npm install --prefix "$RUNNER_TEMP/codex" @openai/codex@0.159.2
-      - name: Test packaged MCP launch through Codex
-        run: make test-integration CODEX_TEST_BINARY="$RUNNER_TEMP/codex/node_modules/.bin/codex"
+      - name: Verify canonical package and actual Git-backed installation
+        run: make test-integration CANONICAL_SOURCE_DIR="$GITHUB_WORKSPACE/.canonical" CODEX_TEST_BINARY="$RUNNER_TEMP/codex/node_modules/.bin/codex"

@@ -1,1 +1,7 @@
 .DS_Store
+
+# Temporary source checkout used by CI; never a maintained plugin copy.
+.canonical/
+
+# Python regression-test import cache.
+__pycache__/
