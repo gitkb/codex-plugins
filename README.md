@@ -83,3 +83,15 @@ catalog cannot fall back to the pre-fix standalone `main` while that PR is open.
 ## License
 
 MIT
+
+Source verification compares every file's bytes and executable mode with the
+pinned Git tree, independently of the index, ignore rules, replacement refs,
+and fsmonitor hooks. Unexpected files (including ignored import shadows),
+symlinks, and special files fail before package tests execute. Provided checkouts
+must be pristine; use the default temporary checkout when a developer checkout
+contains generated files. Delegated checks use a temporary home and omit parent
+credentials, Python/shell startup overrides, and ATC session settings. The shared
+canonical driver covers both fresh installation and upgrade from a bundled
+`0.1.0` fixture. These checks validate catalog selection and the MCP launch
+boundary; they are not a sandbox for arbitrary package code or a live ATC
+registry acceptance test. Python 3.11 or newer is required.

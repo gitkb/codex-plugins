@@ -4,10 +4,10 @@ all: lint test
 
 test:
 	@tests/package-policy.sh
-	@python3 tests/catalog-policy.py
+	@python3 -B tests/catalog-policy.py
 
 test-integration:
-	@python3 tests/verify-source.py --codex "$(CODEX_TEST_BINARY)" $(if $(CANONICAL_SOURCE_DIR),--source-checkout "$(CANONICAL_SOURCE_DIR)")
+	@python3 -B tests/verify-source.py --codex "$(CODEX_TEST_BINARY)" $(if $(CANONICAL_SOURCE_DIR),--source-checkout "$(CANONICAL_SOURCE_DIR)")
 
 lint: lint-json lint-policy
 	@echo "All checks passed."

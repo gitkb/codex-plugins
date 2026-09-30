@@ -10,7 +10,7 @@
         "source": "git-subdir",
         "url": "https://github.com/gitkb/gitkb-codex-plugin.git",
         "path": "./plugin",
-        "sha": "3c30820e97bcb3f6eb4f9648c8d07b8784bbb930"
+        "sha": "3a6c6ecc6fa6e79a5170151209f565dda5e153d8"
       },
       "policy": {
         "installation": "AVAILABLE",
