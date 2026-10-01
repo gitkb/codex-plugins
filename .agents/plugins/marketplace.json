@@ -7,8 +7,10 @@
     {
       "name": "gitkb",
       "source": {
-        "source": "local",
-        "path": "./plugins/gitkb"
+        "source": "git-subdir",
+        "url": "https://github.com/gitkb/gitkb-codex-plugin.git",
+        "path": "./plugin",
+        "sha": "d6b67ba8b244a9072996d63636bb8bf614ffc207"
       },
       "policy": {
         "installation": "AVAILABLE",
